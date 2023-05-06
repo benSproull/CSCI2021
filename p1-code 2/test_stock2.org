@@ -1,0 +1,1722 @@
+#+TITLE: Problem 2 Remaining Functions in stock_funcs.c
+#+TESTY: PREFIX="prob2"
+#+TESTY: USE_VALGRIND=1
+# Updated: Tue Sep 28 03:12:57 PM CDT 2021 
+
+* stock_set_minmax1
+#+TESTY: program='./test_stock_funcs stock_set_minmax1'
+#+BEGIN_SRC sh
+{
+    // Checks if stock_set_minmax() correctly sets the min_index and
+    // max_index fields in a small prices array
+    double prices[5] = {
+      168.00, 16.03, 14.11, 50.00, 96.89,
+    };
+    stock_t stock = {
+      .data_file = "5prices.txt",
+      .count = 5,
+      .prices = prices,
+      .min_index = -1,
+      .max_index = -1,
+      .best_buy  = -1,
+      .best_sell = -1,
+    };
+    stock_set_minmax(&stock);
+
+    stock_print(&stock);
+}
+data_file: 5prices.txt
+count: 5
+prices: [168.00, 16.03, 14.11, ...]
+min_index: 2
+max_index: 0
+best_buy:  -1
+best_sell: -1
+profit:    0.00
+#+END_SRC
+
+* stock_set_minmax2
+#+TESTY: program='./test_stock_funcs stock_set_minmax2'
+#+BEGIN_SRC sh
+{
+    // Checks if stock_set_minmax() correctly sets the min_index and
+    // max_index fields in a larger prices array
+    double prices[10] = {
+      125.72, 190.04, 45.25, 32.37, 40.99, 
+      168.00, 16.03, 14.11, 50.00, 96.89,
+    };
+    stock_t *stock = stock_new();
+
+    stock->data_file = strdup("bouncy-prices.txt");
+    stock->count = 10;
+    stock->prices = malloc(sizeof(double)*10);
+    memcpy(stock->prices, prices, sizeof(double)*10);
+    stock->min_index = -1;
+    stock->max_index = -1;
+    stock->best_buy  = -1;
+    stock->best_sell = -1;
+
+    stock_set_minmax(stock);
+    stock_print(stock);
+
+    stock_free(stock);
+}
+data_file: bouncy-prices.txt
+count: 10
+prices: [125.72, 190.04, 45.25, ...]
+min_index: 7
+max_index: 1
+best_buy:  -1
+best_sell: -1
+profit:    0.00
+#+END_SRC
+
+* stock_set_minmax3
+#+TESTY: program='./test_stock_funcs stock_set_minmax3'
+#+BEGIN_SRC sh
+{
+    // Checks behavior of stock_set_minmax() in length 0 and length 1
+    // arrays
+    double prices0[0] = {};
+    stock_t stock0 = {
+      .data_file = "0prices.txt",
+      .count = 0,
+      .prices = prices0,
+      .min_index = -1,
+      .max_index = -1,
+      .best_buy  = -1,
+      .best_sell = -1,
+    };
+    stock_set_minmax(&stock0);
+    stock_print(&stock0);
+
+    double prices1[1] = {123.45};
+    stock_t stock1 = {
+      .data_file = "1prices.txt",
+      .count = 1,
+      .prices = prices1,
+      .min_index = -1,
+      .max_index = -1,
+      .best_buy  = -1,
+      .best_sell = -1,
+    };
+    stock_set_minmax(&stock1);
+    stock_print(&stock1);
+}
+data_file: 0prices.txt
+count: 0
+prices: []
+min_index: -1
+max_index: -1
+best_buy:  -1
+best_sell: -1
+profit:    0.00
+data_file: 1prices.txt
+count: 1
+prices: [123.45]
+min_index: 0
+max_index: 0
+best_buy:  -1
+best_sell: -1
+profit:    0.00
+#+END_SRC
+
+* stock_set_best1
+#+TESTY: program='./test_stock_funcs stock_set_best1'
+#+BEGIN_SRC sh
+{
+    // Checks for correct setting of best buy/sell point which aligns
+    // with the stock min/max prices in this test
+    double prices[9] = {
+      45.0, 35.0, 25.0, 15.0, 5.0,
+      10.0, 20.0, 30.0, 7.0,
+    };
+    stock_t stock = {
+      .data_file = "prices.txt",
+      .count = 9,
+      .prices = prices,
+      .min_index = -1,
+      .max_index = -1,
+      .best_buy  = -1,
+      .best_sell = -1,
+    };
+    int ret = stock_set_best(&stock);
+    stock_set_minmax(&stock);
+    printf("ret: %d\n", ret);
+    stock_print(&stock);
+}
+ret: 0
+data_file: prices.txt
+count: 9
+prices: [45.00, 35.00, 25.00, ...]
+min_index: 4
+max_index: 0
+best_buy:  4
+best_sell: 7
+profit:    25.00
+{
+    // Checks for correct setting of best buy/sell point; in this case
+    // the best buy does not match the minimum price but the best sell
+    // point does match the maximum
+    double prices[10] = {
+      30.0, 20.0, 30.0, 40.0, 50.0,
+      45.0, 35.0, 25.0, 15.0, 5.0,
+    };
+    stock_t stock = {
+      .data_file = "prices.txt",
+      .count = 10,
+      .prices = prices,
+      .min_index = -1,
+      .max_index = -1,
+      .best_buy  = -1,
+      .best_sell = -1,
+    };
+    int ret = stock_set_best(&stock);
+    stock_set_minmax(&stock);
+    printf("ret: %d\n", ret);
+    stock_print(&stock);
+}
+ret: 0
+data_file: prices.txt
+count: 10
+prices: [30.00, 20.00, 30.00, ...]
+min_index: 9
+max_index: 4
+best_buy:  1
+best_sell: 4
+profit:    30.00
+#+END_SRC
+
+* stock_set_best2 and 3
+#+TESTY: program='./test_stock_funcs stock_set_best2'
+#+BEGIN_SRC sh
+{
+    // Checks for correct setting of best buy/sell point; in this case
+    // the best buy does matches the minimum price but the best sell
+    // point does not match the maximum
+    double prices[13] = {
+      50.0, 45.0, 25.0, 10.0, 12.0,
+      15.0, 35.0, 34.0, 18.5, 16.5,
+      15.5, 10.5,
+    };
+    stock_t stock = {
+      .data_file = "prices.txt",
+      .count = 13,
+      .prices = prices,
+      .min_index = -1,
+      .max_index = -1,
+      .best_buy  = -1,
+      .best_sell = -1,
+    };
+    int ret = stock_set_best(&stock);
+    stock_set_minmax(&stock);
+    printf("ret: %d\n", ret);
+    stock_print(&stock);
+}
+ret: 0
+data_file: prices.txt
+count: 13
+prices: [50.00, 45.00, 25.00, ...]
+min_index: 12
+max_index: 0
+best_buy:  3
+best_sell: 6
+profit:    25.00
+#+END_SRC
+
+#+TESTY: program='./test_stock_funcs stock_set_best2'
+#+BEGIN_SRC sh
+{
+    // Checks for correct setting of best buy/sell point; in this case
+    // the best buy does matches the minimum price but the best sell
+    // point does not match the maximum
+    double prices[13] = {
+      50.0, 45.0, 25.0, 10.0, 12.0,
+      15.0, 35.0, 34.0, 18.5, 16.5,
+      15.5, 10.5,
+    };
+    stock_t stock = {
+      .data_file = "prices.txt",
+      .count = 13,
+      .prices = prices,
+      .min_index = -1,
+      .max_index = -1,
+      .best_buy  = -1,
+      .best_sell = -1,
+    };
+    int ret = stock_set_best(&stock);
+    stock_set_minmax(&stock);
+    printf("ret: %d\n", ret);
+    stock_print(&stock);
+}
+ret: 0
+data_file: prices.txt
+count: 13
+prices: [50.00, 45.00, 25.00, ...]
+min_index: 12
+max_index: 0
+best_buy:  3
+best_sell: 6
+profit:    25.00
+#+END_SRC
+
+* stock_set_best4
+#+TESTY: program='./test_stock_funcs stock_set_best4'
+#+BEGIN_SRC sh
+{
+    // Checks that when there is no profitable time to buy/sell
+    // (profit of 0.0), then the best_buy / best_sell are set to -1
+    // and the function returns -1
+    double prices[8] = {
+      50.0, 45.0, 30.0, 22.0, 18.0,
+      15.0, 10.5, 8.5,
+    };
+    stock_t stock = {
+      .data_file = "prices.txt",
+      .count = 8,
+      .prices = prices,
+      .min_index = -1,
+      .max_index = -1,
+      .best_buy  = 0,
+      .best_sell = 0,
+    };
+    int ret = stock_set_best(&stock);
+    stock_set_minmax(&stock);
+    printf("ret: %d\n", ret);
+    stock_print(&stock);
+}
+ret: -1
+data_file: prices.txt
+count: 8
+prices: [50.00, 45.00, 30.00, ...]
+min_index: 7
+max_index: 0
+best_buy:  -1
+best_sell: -1
+profit:    0.00
+#+END_SRC
+
+* count_lines
+#+TESTY: program='./test_stock_funcs count_lines'
+#+BEGIN_SRC sh
+{
+    // Checks several calls to count_lines() on different files in the
+    // data/ directory.  This directory must be present with the
+    // provided data files for the tests to work correctly.
+    int ret = count_lines("data/stock-3only.txt");
+    printf("ret: %d\n", ret);
+}
+ret: 3
+{
+    int ret = count_lines("data/stock-ascending.txt");
+    printf("ret: %d\n", ret);
+}
+ret: 10
+{
+    int ret = count_lines("data/stock-FB-08-02-2021.txt");
+    printf("ret: %d\n", ret);
+}
+ret: 543
+{
+    int ret = count_lines("data/stock-empty.txt");
+    printf("ret: %d\n", ret);
+}
+ret: 0
+{
+    int ret = count_lines("data/not-there.txt");
+    printf("ret: %d\n", ret);
+}
+Could not open file 'data/not-there.txt'
+ret: -1
+#+END_SRC
+
+* stock_load1
+#+TESTY: program='./test_stock_funcs stock_load1'
+#+BEGIN_SRC sh
+{
+    // Checks stock_load() on a small data file to determine if it
+    // correctly loads a small number of prices into an existing
+    // stock.
+    stock_t *stock = stock_new();
+    int ret = stock_load(stock, "data/stock-3only.txt");
+    printf("ret: %d\n", ret);
+    stock_print(stock);
+    stock_free(stock);
+}
+ret: 0
+data_file: data/stock-3only.txt
+count: 3
+prices: [103.07, 45.26, 59.43]
+min_index: -1
+max_index: -1
+best_buy:  -1
+best_sell: -1
+profit:    0.00
+#+END_SRC
+
+* stock_load2 and 3
+#+TESTY: program='./test_stock_funcs stock_load2'
+#+BEGIN_SRC sh
+{
+    // Checks loading a stock file via stock_load() on a file in the
+    // data/ directory.  This directory must be present with the
+    // provided data files for the tests to work correctly.
+    stock_t *stock = stock_new();
+    int ret = stock_load(stock, "data/stock-jagged.txt");
+    printf("ret: %d\n", ret);
+    stock_print(stock);
+    stock_free(stock);
+}
+ret: 0
+data_file: data/stock-jagged.txt
+count: 15
+prices: [103.00, 250.00, 133.00, ...]
+min_index: -1
+max_index: -1
+best_buy:  -1
+best_sell: -1
+profit:    0.00
+#+END_SRC
+
+#+TESTY: program='./test_stock_funcs stock_load3'
+#+BEGIN_SRC sh
+{
+    // Checks loading a stock file via stock_load() on a file in the
+    // data/ directory.  This directory must be present with the
+    // provided data files for the tests to work correctly.
+    stock_t *stock = stock_new();
+    int ret = stock_load(stock, "data/stock-GOOG-08-02-2021.txt");
+    printf("ret: %d\n", ret);
+    stock_print(stock);
+    stock_free(stock);
+}
+ret: 0
+data_file: data/stock-GOOG-08-02-2021.txt
+count: 345
+prices: [2715.00, 2715.00, 2711.00, ...]
+min_index: -1
+max_index: -1
+best_buy:  -1
+best_sell: -1
+profit:    0.00
+#+END_SRC
+
+* stock_load pathological
+#+TESTY: program='./test_stock_funcs stock_load_1price'
+#+BEGIN_SRC sh
+{
+    // stock_load() calls on price arrays of 1 
+    stock_t *stock = stock_new();
+    int ret = stock_load(stock, "data/stock-1only.txt");
+    printf("ret: %d\n", ret);
+    stock_print(stock);
+    stock_free(stock);
+}
+ret: 0
+data_file: data/stock-1only.txt
+count: 1
+prices: [70.00]
+min_index: -1
+max_index: -1
+best_buy:  -1
+best_sell: -1
+profit:    0.00
+#+END_SRC
+
+#+TESTY: program='./test_stock_funcs stock_load_empty'
+#+BEGIN_SRC sh
+{
+    // Load a completely empty stock file - should give count of 0 and
+    // an empty prices array.
+    stock_t *stock = stock_new();
+    int ret = stock_load(stock, "data/stock-empty.txt");
+    printf("ret: %d\n", ret);
+    stock_print(stock);
+    stock_free(stock);
+}
+ret: 0
+data_file: data/stock-empty.txt
+count: 0
+prices: []
+min_index: -1
+max_index: -1
+best_buy:  -1
+best_sell: -1
+profit:    0.00
+#+END_SRC
+
+#+TESTY: program='./test_stock_funcs stock_load_no_file'
+#+BEGIN_SRC sh
+{
+    // Attempt to load a non-existent file which should fail and leave
+    // the stock struct un-altered.
+    stock_t *stock = stock_new();
+    int ret = stock_load(stock, "data/not-there.txt");
+    printf("ret: %d\n", ret);
+    stock_print(stock);
+    stock_free(stock);
+}
+Could not open file 'data/not-there.txt'
+Unable to open stock file 'data/not-there.txt', bailing out
+ret: -1
+data_file: NULL
+count: -1
+prices: NULL
+min_index: -1
+max_index: -1
+best_buy:  -1
+best_sell: -1
+profit:    0.00
+#+END_SRC
+
+* stock_plot1
+#+TESTY: program='./test_stock_funcs stock_plot1'
+#+BEGIN_SRC sh
+{
+    // Plots a stock with a small prices array that is NOT loaded from
+    // a file with a couple different widths. Prices and max_width are
+    // selected for an integer (non-fraction) plot step.
+    double prices[6] = {5.0, 15.0, 0.0, 10.0, 25.0, 20.0};
+    stock_t stock = {
+      .data_file = "a-data-file.txt",
+      .count = 6,
+      .prices = prices,
+      .min_index = 2,
+      .max_index = 4,
+      .best_buy  = -1,
+      .best_sell = -1,
+    };
+    stock_plot(&stock, 5);
+    printf("\n");
+    stock_plot(&stock, 25);
+}
+max_width: 5
+range:     25.00
+plot step: 5.00
+                    +-----
+  0:           5.00 |#
+  1:          15.00 |###
+  2:   MIN     0.00 |
+  3:          10.00 |##
+  4:   MAX    25.00 |#####
+  5:          20.00 |####
+
+max_width: 25
+range:     25.00
+plot step: 1.00
+                    +-------------------------
+  0:           5.00 |#####
+  1:          15.00 |###############
+  2:   MIN     0.00 |
+  3:          10.00 |##########
+  4:   MAX    25.00 |#########################
+  5:          20.00 |####################
+#+END_SRC
+
+* stock_plot2 3 4
+#+TESTY: program='./test_stock_funcs stock_plot2'
+#+BEGIN_SRC sh
+{
+    // Similar to previous test but this time with non-integer plot
+    // step for bars.
+    double prices[5] = {5.0, 25.0, 10.0, 0.0, 15.0};
+    stock_t stock = {
+      .data_file = "b-data-file.txt",
+      .count = 5,
+      .prices = prices,
+      .min_index = 3,
+      .max_index = 1,
+      .best_buy  = -1,
+      .best_sell = -1,
+    };
+    stock_plot(&stock, 6);
+    printf("\n");
+    stock_plot(&stock, 12);
+}
+max_width: 6
+range:     25.00
+plot step: 4.17
+                    +------
+  0:           5.00 |#
+  1:   MAX    25.00 |######
+  2:          10.00 |##
+  3:   MIN     0.00 |
+  4:          15.00 |###
+
+max_width: 12
+range:     25.00
+plot step: 2.08
+                    +------------
+  0:           5.00 |##
+  1:   MAX    25.00 |############
+  2:          10.00 |####
+  3:   MIN     0.00 |
+  4:          15.00 |#######
+#+END_SRC
+
+#+TESTY: program='./test_stock_funcs stock_plot3'
+#+BEGIN_SRC sh
+{
+    // Check if min/max indices are printed correctly, no best
+    // buy/sell indices set.
+    double prices[7] = {5.0, 15.0, 0.0, 10.0, 25.0, 20.0, 17.0};
+    stock_t stock = {
+      .data_file = "c-data-file.txt",
+      .count = 7,
+      .prices = prices,
+      .min_index = 2,
+      .max_index = 4,
+      .best_buy  = -1,
+      .best_sell = -1,
+    };
+    stock_plot(&stock, 5);
+    printf("\n");
+    stock_plot(&stock, 25);
+}
+max_width: 5
+range:     25.00
+plot step: 5.00
+                    +-----
+  0:           5.00 |#
+  1:          15.00 |###
+  2:   MIN     0.00 |
+  3:          10.00 |##
+  4:   MAX    25.00 |#####
+  5:          20.00 |####
+  6:          17.00 |###
+
+max_width: 25
+range:     25.00
+plot step: 1.00
+                    +-------------------------
+  0:           5.00 |#####
+  1:          15.00 |###############
+  2:   MIN     0.00 |
+  3:          10.00 |##########
+  4:   MAX    25.00 |#########################
+  5:          20.00 |####################
+  6:          17.00 |#################
+#+END_SRC
+
+#+TESTY: program='./test_stock_funcs stock_plot4'
+#+BEGIN_SRC sh
+{
+    // Min/max indices and best buy/sell indices are all set.
+    double prices[5] = {5.0, 25.0, 10.0, 0.0, 15.0};
+    stock_t stock = {
+      .data_file = "b-data-file.txt",
+      .count = 5,
+      .prices = prices,
+      .min_index = 3,
+      .max_index = 1,
+      .best_buy  = 0,
+      .best_sell = 1,
+    };
+    stock_plot(&stock, 10);
+    printf("\n");
+    stock_plot(&stock, 15);
+}
+max_width: 10
+range:     25.00
+plot step: 2.50
+                    +----------
+  0: B         5.00 |##
+  1: S MAX    25.00 |##########
+  2:          10.00 |####
+  3:   MIN     0.00 |
+  4:          15.00 |######
+
+max_width: 15
+range:     25.00
+plot step: 1.67
+                    +---------------
+  0: B         5.00 |###
+  1: S MAX    25.00 |###############
+  2:          10.00 |######
+  3:   MIN     0.00 |
+  4:          15.00 |#########
+#+END_SRC
+
+
+* stock_plot5 6
+#+TESTY: program='./test_stock_funcs stock_plot5'
+#+BEGIN_SRC sh
+{
+    // Loads a couple stocks from files and checks if they are printed
+    // correctly.
+    stock_t *stock = stock_new();
+    int ret = stock_load(stock,"data/stock-valley.txt");
+    printf("ret: %d\n",ret);
+    stock_set_minmax(stock);
+    stock_set_best(stock);
+    stock_print(stock);
+    stock_plot(stock, 10);
+    stock_free(stock);
+}
+ret: 0
+data_file: data/stock-valley.txt
+count: 12
+prices: [100.00, 90.00, 80.00, ...]
+min_index: 5
+max_index: 11
+best_buy:  5
+best_sell: 11
+profit:    55.00
+max_width: 10
+range:     55.00
+plot step: 5.50
+                    +----------
+  0:         100.00 |#########
+  1:          90.00 |#######
+  2:          80.00 |#####
+  3:          70.00 |###
+  4:          60.00 |#
+  5: B MIN    50.00 |
+  6:          55.00 |
+  7:          65.00 |##
+  8:          75.00 |####
+  9:          85.00 |######
+ 10:          95.00 |########
+ 11: S MAX   105.00 |##########
+#+END_SRC
+
+#+TESTY: program='./test_stock_funcs stock_plot6'
+#+BEGIN_SRC sh
+{
+    stock_t *stock = stock_new();
+    int ret = stock_load(stock,"data/stock-min-after-max.txt");
+    printf("ret: %d\n",ret);
+    stock_set_minmax(stock);
+    stock_set_best(stock);
+    stock_print(stock);
+    stock_plot(stock, 10);
+    stock_free(stock);
+}
+ret: 0
+data_file: data/stock-min-after-max.txt
+count: 15
+prices: [223.00, 292.00, 27.00, ...]
+min_index: 10
+max_index: 4
+best_buy:  2
+best_sell: 4
+profit:    296.00
+max_width: 10
+range:     309.00
+plot step: 30.90
+                    +----------
+  0:         223.00 |######
+  1:         292.00 |########
+  2: B        27.00 |
+  3:          92.00 |##
+  4: S MAX   323.00 |##########
+  5:         189.00 |#####
+  6:         207.00 |######
+  7:         142.00 |####
+  8:         321.00 |#########
+  9:          89.00 |##
+ 10:   MIN    14.00 |
+ 11:         182.00 |#####
+ 12:         164.00 |####
+ 13:         156.00 |####
+ 14:         169.00 |#####
+#+END_SRC
+
+
+* stock_main1
+
+** data/stock-ascending.txt
+Runs the provided ~stock_main~ program on a the file
+data/stock-ascending.txt to see if the correct command line output is
+produced.
+
+#+TESTY: program='./stock_main 21 data/stock-ascending.txt'
+#+BEGIN_SRC sh
+data_file: data/stock-ascending.txt
+count: 10
+prices: [10.00, 20.00, 30.00, ...]
+min_index: 0
+max_index: 9
+best_buy:  0
+best_sell: 9
+profit:    90.00
+max_width: 21
+range:     90.00
+plot step: 4.29
+                    +---------------------
+  0: B MIN    10.00 |
+  1:          20.00 |##
+  2:          30.00 |####
+  3:          40.00 |#######
+  4:          50.00 |#########
+  5:          60.00 |###########
+  6:          70.00 |##############
+  7:          80.00 |################
+  8:          90.00 |##################
+  9: S MAX   100.00 |#####################
+#+END_SRC
+
+** data/stock-min-after-max.txt
+Runs the provided ~stock_main~ program on a the file
+data/stock-min-after-max.txt to see if the correct command line output
+is produced.
+
+#+TESTY: program='./stock_main 14 data/stock-min-after-max.txt'
+#+BEGIN_SRC sh
+data_file: data/stock-min-after-max.txt
+count: 15
+prices: [223.00, 292.00, 27.00, ...]
+min_index: 10
+max_index: 4
+best_buy:  2
+best_sell: 4
+profit:    296.00
+max_width: 14
+range:     309.00
+plot step: 22.07
+                    +--------------
+  0:         223.00 |#########
+  1:         292.00 |############
+  2: B        27.00 |
+  3:          92.00 |###
+  4: S MAX   323.00 |#############
+  5:         189.00 |#######
+  6:         207.00 |########
+  7:         142.00 |#####
+  8:         321.00 |#############
+  9:          89.00 |###
+ 10:   MIN    14.00 |
+ 11:         182.00 |#######
+ 12:         164.00 |######
+ 13:         156.00 |######
+ 14:         169.00 |#######
+#+END_SRC
+
+* stock_main2
+** Facebook Stock
+Runs on a stock_main on a larger Facebook stock pricing. Note the best
+buy/sell are completely different from the min/max prices here: a bad
+day for Marky Z.
+
+#+TESTY: program='./stock_main 22 data/stock-FB-08-02-2021.txt'
+#+BEGIN_SRC sh
+data_file: data/stock-FB-08-02-2021.txt
+count: 543
+prices: [358.94, 358.50, 358.50, ...]
+min_index: 470
+max_index: 15
+best_buy:  109
+best_sell: 129
+profit:    2.38
+max_width: 22
+range:     8.00
+plot step: 0.36
+                    +----------------------
+  0:         358.94 |#####################
+  1:         358.50 |####################
+  2:         358.50 |####################
+  3:         358.60 |####################
+  4:         358.60 |####################
+  5:         358.50 |####################
+  6:         358.50 |####################
+  7:         358.58 |####################
+  8:         358.60 |####################
+  9:         358.95 |#####################
+ 10:         358.95 |#####################
+ 11:         358.95 |#####################
+ 12:         358.95 |#####################
+ 13:         358.90 |#####################
+ 14:         358.70 |#####################
+ 15:   MAX   358.99 |######################
+ 16:         358.99 |######################
+ 17:         358.70 |#####################
+ 18:         358.58 |####################
+ 19:         358.25 |###################
+ 20:         358.00 |###################
+ 21:         358.23 |###################
+ 22:         358.19 |###################
+ 23:         358.26 |###################
+ 24:         358.19 |###################
+ 25:         358.23 |###################
+ 26:         358.22 |###################
+ 27:         358.40 |####################
+ 28:         358.40 |####################
+ 29:         358.47 |####################
+ 30:         358.40 |####################
+ 31:         358.43 |####################
+ 32:         358.30 |####################
+ 33:         358.33 |####################
+ 34:         358.41 |####################
+ 35:         358.45 |####################
+ 36:         358.35 |####################
+ 37:         358.35 |####################
+ 38:         358.40 |####################
+ 39:         358.00 |###################
+ 40:         358.14 |###################
+ 41:         358.00 |###################
+ 42:         358.12 |###################
+ 43:         358.11 |###################
+ 44:         358.18 |###################
+ 45:         358.16 |###################
+ 46:         358.10 |###################
+ 47:         358.20 |###################
+ 48:         358.22 |###################
+ 49:         358.19 |###################
+ 50:         358.19 |###################
+ 51:         358.18 |###################
+ 52:         358.19 |###################
+ 53:         358.19 |###################
+ 54:         358.26 |###################
+ 55:         358.28 |####################
+ 56:         358.24 |###################
+ 57:         358.02 |###################
+ 58:         358.00 |###################
+ 59:         357.73 |##################
+ 60:         357.93 |###################
+ 61:         357.50 |#################
+ 62:         357.70 |##################
+ 63:         357.75 |##################
+ 64:         358.03 |###################
+ 65:         357.85 |##################
+ 66:         357.90 |###################
+ 67:         358.10 |###################
+ 68:         358.11 |###################
+ 69:         358.10 |###################
+ 70:         357.85 |##################
+ 71:         357.90 |###################
+ 72:         357.97 |###################
+ 73:         358.00 |###################
+ 74:         357.60 |##################
+ 75:         357.60 |##################
+ 76:         357.80 |##################
+ 77:         357.66 |##################
+ 78:         358.00 |###################
+ 79:         357.74 |##################
+ 80:         357.70 |##################
+ 81:         358.00 |###################
+ 82:         357.50 |#################
+ 83:         357.98 |###################
+ 84:         357.50 |#################
+ 85:         357.99 |###################
+ 86:         358.00 |###################
+ 87:         358.45 |####################
+ 88:         358.16 |###################
+ 89:         357.78 |##################
+ 90:         357.62 |##################
+ 91:         357.33 |#################
+ 92:         356.93 |################
+ 93:         356.85 |################
+ 94:         356.05 |#############
+ 95:         356.56 |###############
+ 96:         356.46 |###############
+ 97:         356.50 |###############
+ 98:         356.28 |##############
+ 99:         356.37 |##############
+100:         355.62 |############
+101:         355.29 |###########
+102:         355.33 |###########
+103:         355.29 |###########
+104:         354.91 |##########
+105:         354.16 |########
+106:         354.24 |########
+107:         353.62 |#######
+108:         353.16 |#####
+109: B       352.78 |####
+110:         353.28 |######
+111:         354.00 |########
+112:         354.25 |########
+113:         354.13 |########
+114:         353.88 |#######
+115:         354.31 |#########
+116:         354.43 |#########
+117:         354.49 |#########
+118:         354.47 |#########
+119:         354.34 |#########
+120:         354.05 |########
+121:         354.05 |########
+122:         353.95 |########
+123:         353.59 |#######
+124:         353.70 |#######
+125:         354.18 |########
+126:         354.68 |##########
+127:         354.70 |##########
+128:         354.90 |##########
+129: S       355.16 |###########
+130:         354.89 |##########
+131:         354.80 |##########
+132:         354.97 |##########
+133:         354.87 |##########
+134:         354.61 |#########
+135:         354.65 |##########
+136:         354.60 |#########
+137:         354.76 |##########
+138:         354.76 |##########
+139:         354.35 |#########
+140:         354.27 |#########
+141:         353.96 |########
+142:         354.17 |########
+143:         353.90 |########
+144:         353.85 |#######
+145:         353.70 |#######
+146:         353.71 |#######
+147:         353.95 |########
+148:         353.89 |#######
+149:         353.78 |#######
+150:         353.77 |#######
+151:         353.61 |#######
+152:         353.59 |#######
+153:         353.20 |######
+154:         353.13 |#####
+155:         353.10 |#####
+156:         352.87 |#####
+157:         353.19 |######
+158:         353.34 |######
+159:         353.63 |#######
+160:         353.50 |######
+161:         353.12 |#####
+162:         352.95 |#####
+163:         353.19 |######
+164:         353.12 |#####
+165:         352.97 |#####
+166:         353.10 |#####
+167:         353.03 |#####
+168:         353.14 |#####
+169:         353.07 |#####
+170:         353.11 |#####
+171:         353.44 |######
+172:         353.36 |######
+173:         353.50 |######
+174:         353.78 |#######
+175:         353.79 |#######
+176:         353.95 |########
+177:         353.93 |########
+178:         353.80 |#######
+179:         353.88 |#######
+180:         353.89 |#######
+181:         354.11 |########
+182:         354.22 |########
+183:         354.07 |########
+184:         354.12 |########
+185:         354.40 |#########
+186:         354.15 |########
+187:         354.26 |#########
+188:         354.43 |#########
+189:         354.15 |########
+190:         353.96 |########
+191:         354.14 |########
+192:         354.12 |########
+193:         354.14 |########
+194:         354.18 |########
+195:         354.10 |########
+196:         354.05 |########
+197:         353.80 |#######
+198:         353.70 |#######
+199:         353.76 |#######
+200:         353.58 |#######
+201:         354.08 |########
+202:         354.31 |#########
+203:         354.27 |#########
+204:         353.94 |########
+205:         353.88 |#######
+206:         354.07 |########
+207:         354.12 |########
+208:         354.04 |########
+209:         354.08 |########
+210:         353.97 |########
+211:         354.07 |########
+212:         354.05 |########
+213:         354.05 |########
+214:         354.08 |########
+215:         354.08 |########
+216:         354.06 |########
+217:         354.05 |########
+218:         354.33 |#########
+219:         354.24 |########
+220:         354.14 |########
+221:         354.19 |########
+222:         354.12 |########
+223:         354.21 |########
+224:         354.44 |#########
+225:         354.28 |#########
+226:         354.31 |#########
+227:         354.42 |#########
+228:         354.34 |#########
+229:         354.36 |#########
+230:         354.22 |########
+231:         354.42 |#########
+232:         354.21 |########
+233:         354.17 |########
+234:         353.69 |#######
+235:         353.48 |######
+236:         353.31 |######
+237:         353.06 |#####
+238:         353.00 |#####
+239:         353.10 |#####
+240:         353.21 |######
+241:         353.21 |######
+242:         353.21 |######
+243:         353.14 |#####
+244:         353.06 |#####
+245:         353.02 |#####
+246:         353.08 |#####
+247:         353.18 |######
+248:         353.32 |######
+249:         353.51 |######
+250:         353.52 |######
+251:         353.56 |#######
+252:         353.52 |######
+253:         353.56 |#######
+254:         353.59 |#######
+255:         353.52 |######
+256:         353.62 |#######
+257:         353.58 |#######
+258:         353.67 |#######
+259:         353.50 |######
+260:         353.79 |#######
+261:         353.57 |#######
+262:         353.41 |######
+263:         353.40 |######
+264:         353.38 |######
+265:         353.48 |######
+266:         353.25 |######
+267:         353.72 |#######
+268:         353.76 |#######
+269:         353.56 |#######
+270:         353.80 |#######
+271:         353.70 |#######
+272:         353.72 |#######
+273:         353.85 |#######
+274:         353.87 |#######
+275:         353.86 |#######
+276:         353.90 |########
+277:         353.60 |#######
+278:         353.79 |#######
+279:         353.70 |#######
+280:         353.65 |#######
+281:         353.65 |#######
+282:         353.73 |#######
+283:         353.67 |#######
+284:         353.67 |#######
+285:         353.67 |#######
+286:         353.62 |#######
+287:         353.56 |#######
+288:         353.60 |#######
+289:         353.69 |#######
+290:         353.53 |######
+291:         353.44 |######
+292:         353.40 |######
+293:         353.31 |######
+294:         353.52 |######
+295:         353.41 |######
+296:         353.43 |######
+297:         353.37 |######
+298:         353.42 |######
+299:         353.52 |######
+300:         353.58 |#######
+301:         353.52 |######
+302:         353.50 |######
+303:         353.36 |######
+304:         353.45 |######
+305:         353.26 |######
+306:         353.38 |######
+307:         353.45 |######
+308:         353.50 |######
+309:         353.47 |######
+310:         353.44 |######
+311:         353.48 |######
+312:         353.59 |#######
+313:         353.52 |######
+314:         353.50 |######
+315:         353.59 |#######
+316:         353.60 |#######
+317:         353.53 |######
+318:         353.57 |#######
+319:         353.49 |######
+320:         353.44 |######
+321:         353.36 |######
+322:         353.30 |######
+323:         353.28 |######
+324:         353.31 |######
+325:         353.12 |#####
+326:         352.87 |#####
+327:         352.94 |#####
+328:         352.98 |#####
+329:         352.86 |#####
+330:         352.98 |#####
+331:         352.96 |#####
+332:         352.92 |#####
+333:         353.05 |#####
+334:         353.03 |#####
+335:         353.05 |#####
+336:         353.13 |#####
+337:         353.22 |######
+338:         353.08 |#####
+339:         353.09 |#####
+340:         352.97 |#####
+341:         352.84 |#####
+342:         352.90 |#####
+343:         352.66 |####
+344:         352.69 |####
+345:         352.62 |####
+346:         352.53 |####
+347:         352.45 |####
+348:         352.64 |####
+349:         352.74 |####
+350:         352.47 |####
+351:         352.45 |####
+352:         352.52 |####
+353:         352.53 |####
+354:         352.49 |####
+355:         352.48 |####
+356:         352.36 |###
+357:         352.51 |####
+358:         352.50 |####
+359:         352.55 |####
+360:         352.62 |####
+361:         352.48 |####
+362:         352.54 |####
+363:         352.50 |####
+364:         352.42 |###
+365:         352.36 |###
+366:         352.45 |####
+367:         352.54 |####
+368:         352.52 |####
+369:         352.48 |####
+370:         352.53 |####
+371:         352.44 |###
+372:         352.47 |####
+373:         352.47 |####
+374:         352.48 |####
+375:         352.49 |####
+376:         352.49 |####
+377:         352.44 |###
+378:         352.49 |####
+379:         352.45 |####
+380:         352.27 |###
+381:         352.23 |###
+382:         352.11 |###
+383:         352.18 |###
+384:         352.17 |###
+385:         352.31 |###
+386:         352.36 |###
+387:         352.57 |####
+388:         352.77 |####
+389:         352.79 |####
+390:         352.58 |####
+391:         352.56 |####
+392:         352.44 |###
+393:         352.52 |####
+394:         352.48 |####
+395:         352.35 |###
+396:         352.51 |####
+397:         352.52 |####
+398:         352.37 |###
+399:         352.55 |####
+400:         352.63 |####
+401:         352.57 |####
+402:         352.66 |####
+403:         352.67 |####
+404:         352.68 |####
+405:         352.51 |####
+406:         352.48 |####
+407:         352.50 |####
+408:         352.49 |####
+409:         352.65 |####
+410:         352.70 |####
+411:         352.67 |####
+412:         352.64 |####
+413:         352.74 |####
+414:         352.68 |####
+415:         352.54 |####
+416:         352.61 |####
+417:         352.69 |####
+418:         352.68 |####
+419:         352.79 |####
+420:         352.89 |#####
+421:         352.98 |#####
+422:         353.11 |#####
+423:         353.07 |#####
+424:         353.14 |#####
+425:         352.97 |#####
+426:         352.94 |#####
+427:         352.83 |#####
+428:         352.89 |#####
+429:         352.82 |#####
+430:         352.76 |####
+431:         352.88 |#####
+432:         352.71 |####
+433:         352.66 |####
+434:         352.74 |####
+435:         352.67 |####
+436:         352.74 |####
+437:         352.65 |####
+438:         352.60 |####
+439:         352.49 |####
+440:         352.43 |###
+441:         352.46 |####
+442:         352.27 |###
+443:         352.21 |###
+444:         352.08 |###
+445:         352.09 |###
+446:         352.08 |###
+447:         352.15 |###
+448:         352.03 |##
+449:         352.03 |##
+450:         351.88 |##
+451:         352.01 |##
+452:         351.61 |#
+453:         351.66 |#
+454:         351.66 |#
+455:         351.44 |#
+456:         351.37 |#
+457:         351.53 |#
+458:         351.37 |#
+459:         351.31 |
+460:         351.35 |#
+461:         351.40 |#
+462:         351.42 |#
+463:         351.37 |#
+464:         351.49 |#
+465:         351.64 |#
+466:         351.47 |#
+467:         351.40 |#
+468:         351.32 |
+469:         351.12 |
+470:   MIN   350.99 |
+471:         351.08 |
+472:         351.30 |
+473:         351.23 |
+474:         351.38 |#
+475:         351.62 |#
+476:         351.98 |##
+477:         352.10 |###
+478:         351.95 |##
+479:         351.95 |##
+480:         351.95 |##
+481:         352.00 |##
+482:         351.92 |##
+483:         351.95 |##
+484:         351.95 |##
+485:         351.95 |##
+486:         351.95 |##
+487:         351.90 |##
+488:         351.95 |##
+489:         351.95 |##
+490:         351.90 |##
+491:         351.01 |
+492:         351.88 |##
+493:         351.71 |#
+494:         351.68 |#
+495:         351.63 |#
+496:         351.63 |#
+497:         351.65 |#
+498:         351.78 |##
+499:         351.90 |##
+500:         351.91 |##
+501:         352.00 |##
+502:         351.82 |##
+503:         351.80 |##
+504:         351.85 |##
+505:         351.90 |##
+506:         351.91 |##
+507:         351.86 |##
+508:         351.94 |##
+509:         351.95 |##
+510:         351.85 |##
+511:         351.95 |##
+512:         351.82 |##
+513:         351.80 |##
+514:         351.80 |##
+515:         351.80 |##
+516:         351.95 |##
+517:         352.05 |##
+518:         351.95 |##
+519:         351.67 |#
+520:         351.89 |##
+521:         351.90 |##
+522:         351.90 |##
+523:         351.89 |##
+524:         351.80 |##
+525:         351.89 |##
+526:         351.89 |##
+527:         351.89 |##
+528:         351.90 |##
+529:         352.01 |##
+530:         351.81 |##
+531:         351.93 |##
+532:         351.84 |##
+533:         351.84 |##
+534:         351.70 |#
+535:         351.80 |##
+536:         351.70 |#
+537:         351.90 |##
+538:         351.70 |#
+539:         351.53 |#
+540:         351.45 |#
+541:         351.61 |#
+542:         351.52 |#
+#+END_SRC
+
+** Google Stock
+Runs stock_main a large-ish Google stock price file.
+
+#+TESTY: program='./stock_main 30 data/stock-GOOG-08-02-2021.txt'
+#+BEGIN_SRC sh
+data_file: data/stock-GOOG-08-02-2021.txt
+count: 345
+prices: [2715.00, 2715.00, 2711.00, ...]
+min_index: 24
+max_index: 337
+best_buy:  24
+best_sell: 337
+profit:    25.75
+max_width: 30
+range:     25.75
+plot step: 0.86
+                    +------------------------------
+  0:        2715.00 |########################
+  1:        2715.00 |########################
+  2:        2711.00 |###################
+  3:        2709.69 |##################
+  4:        2711.04 |###################
+  5:        2710.50 |###################
+  6:        2708.87 |#################
+  7:        2710.36 |###################
+  8:        2709.15 |#################
+  9:        2708.22 |################
+ 10:        2711.34 |####################
+ 11:        2709.83 |##################
+ 12:        2710.05 |##################
+ 13:        2709.61 |##################
+ 14:        2704.39 |############
+ 15:        2703.28 |##########
+ 16:        2704.09 |###########
+ 17:        2700.94 |########
+ 18:        2697.30 |###
+ 19:        2698.05 |####
+ 20:        2698.18 |####
+ 21:        2698.03 |####
+ 22:        2697.44 |###
+ 23:        2698.34 |#####
+ 24: B MIN  2694.04 |
+ 25:        2694.17 |
+ 26:        2695.42 |#
+ 27:        2700.79 |#######
+ 28:        2698.84 |#####
+ 29:        2698.64 |#####
+ 30:        2699.18 |#####
+ 31:        2698.99 |#####
+ 32:        2699.18 |#####
+ 33:        2701.45 |########
+ 34:        2700.80 |#######
+ 35:        2701.06 |########
+ 36:        2702.54 |#########
+ 37:        2700.47 |#######
+ 38:        2700.09 |#######
+ 39:        2695.86 |##
+ 40:        2696.75 |###
+ 41:        2698.62 |#####
+ 42:        2700.42 |#######
+ 43:        2702.27 |#########
+ 44:        2703.61 |###########
+ 45:        2703.60 |###########
+ 46:        2703.48 |##########
+ 47:        2704.60 |############
+ 48:        2707.51 |###############
+ 49:        2709.24 |#################
+ 50:        2708.19 |################
+ 51:        2709.83 |##################
+ 52:        2709.02 |#################
+ 53:        2707.91 |################
+ 54:        2706.74 |##############
+ 55:        2705.90 |#############
+ 56:        2707.05 |###############
+ 57:        2706.53 |##############
+ 58:        2707.10 |###############
+ 59:        2705.26 |#############
+ 60:        2704.30 |###########
+ 61:        2706.02 |#############
+ 62:        2706.54 |##############
+ 63:        2704.88 |############
+ 64:        2705.03 |############
+ 65:        2705.55 |#############
+ 66:        2705.26 |#############
+ 67:        2704.98 |############
+ 68:        2703.53 |###########
+ 69:        2703.91 |###########
+ 70:        2706.92 |###############
+ 71:        2704.48 |############
+ 72:        2704.60 |############
+ 73:        2703.85 |###########
+ 74:        2702.18 |#########
+ 75:        2701.50 |########
+ 76:        2701.64 |########
+ 77:        2702.25 |#########
+ 78:        2702.25 |#########
+ 79:        2702.83 |##########
+ 80:        2702.30 |#########
+ 81:        2703.21 |##########
+ 82:        2702.61 |#########
+ 83:        2704.99 |############
+ 84:        2704.22 |###########
+ 85:        2704.09 |###########
+ 86:        2704.60 |############
+ 87:        2704.89 |############
+ 88:        2706.98 |###############
+ 89:        2706.83 |##############
+ 90:        2707.89 |################
+ 91:        2708.21 |################
+ 92:        2710.63 |###################
+ 93:        2711.27 |####################
+ 94:        2712.69 |#####################
+ 95:        2711.28 |####################
+ 96:        2713.31 |######################
+ 97:        2714.20 |#######################
+ 98:        2715.00 |########################
+ 99:        2715.12 |########################
+100:        2714.79 |########################
+101:        2713.07 |######################
+102:        2713.76 |######################
+103:        2714.75 |########################
+104:        2714.57 |#######################
+105:        2714.95 |########################
+106:        2715.35 |########################
+107:        2715.39 |########################
+108:        2714.03 |#######################
+109:        2713.80 |#######################
+110:        2715.54 |#########################
+111:        2714.97 |########################
+112:        2714.49 |#######################
+113:        2715.94 |#########################
+114:        2715.73 |#########################
+115:        2715.67 |#########################
+116:        2716.98 |##########################
+117:        2718.73 |############################
+118:        2717.65 |###########################
+119:        2716.94 |##########################
+120:        2716.00 |#########################
+121:        2716.15 |#########################
+122:        2716.74 |##########################
+123:        2716.63 |##########################
+124:        2716.24 |#########################
+125:        2716.66 |##########################
+126:        2716.00 |#########################
+127:        2716.00 |#########################
+128:        2717.74 |###########################
+129:        2717.23 |###########################
+130:        2716.75 |##########################
+131:        2716.38 |##########################
+132:        2716.59 |##########################
+133:        2717.50 |###########################
+134:        2716.95 |##########################
+135:        2716.94 |##########################
+136:        2715.90 |#########################
+137:        2715.59 |#########################
+138:        2714.98 |########################
+139:        2714.10 |#######################
+140:        2713.01 |######################
+141:        2713.01 |######################
+142:        2713.20 |######################
+143:        2711.93 |####################
+144:        2708.47 |################
+145:        2707.22 |###############
+146:        2706.14 |##############
+147:        2704.85 |############
+148:        2704.12 |###########
+149:        2704.82 |############
+150:        2705.80 |#############
+151:        2706.14 |##############
+152:        2703.62 |###########
+153:        2704.43 |############
+154:        2704.00 |###########
+155:        2705.11 |############
+156:        2707.00 |###############
+157:        2707.85 |################
+158:        2707.97 |################
+159:        2708.99 |#################
+160:        2707.61 |###############
+161:        2708.68 |#################
+162:        2706.11 |##############
+163:        2704.95 |############
+164:        2707.59 |###############
+165:        2706.40 |##############
+166:        2706.83 |##############
+167:        2704.86 |############
+168:        2704.80 |############
+169:        2705.29 |#############
+170:        2708.24 |################
+171:        2709.17 |#################
+172:        2707.09 |###############
+173:        2707.68 |###############
+174:        2707.10 |###############
+175:        2708.62 |################
+176:        2708.22 |################
+177:        2708.64 |#################
+178:        2708.40 |################
+179:        2708.38 |################
+180:        2708.00 |################
+181:        2707.99 |################
+182:        2708.28 |################
+183:        2707.86 |################
+184:        2707.51 |###############
+185:        2706.68 |##############
+186:        2706.25 |##############
+187:        2704.75 |############
+188:        2705.40 |#############
+189:        2705.82 |#############
+190:        2704.94 |############
+191:        2705.91 |#############
+192:        2704.80 |############
+193:        2706.04 |#############
+194:        2704.99 |############
+195:        2704.40 |############
+196:        2704.39 |############
+197:        2704.14 |###########
+198:        2706.97 |###############
+199:        2706.70 |##############
+200:        2707.00 |###############
+201:        2707.30 |###############
+202:        2707.55 |###############
+203:        2708.14 |################
+204:        2707.96 |################
+205:        2708.66 |#################
+206:        2709.08 |#################
+207:        2709.66 |##################
+208:        2707.56 |###############
+209:        2706.33 |##############
+210:        2706.05 |#############
+211:        2708.87 |#################
+212:        2707.31 |###############
+213:        2706.92 |###############
+214:        2705.41 |#############
+215:        2705.24 |#############
+216:        2705.51 |#############
+217:        2705.18 |############
+218:        2704.25 |###########
+219:        2704.50 |############
+220:        2704.73 |############
+221:        2704.98 |############
+222:        2705.04 |############
+223:        2705.64 |#############
+224:        2705.38 |#############
+225:        2704.75 |############
+226:        2703.54 |###########
+227:        2703.69 |###########
+228:        2703.87 |###########
+229:        2702.59 |#########
+230:        2702.14 |#########
+231:        2702.68 |##########
+232:        2703.63 |###########
+233:        2703.02 |##########
+234:        2703.80 |###########
+235:        2703.43 |##########
+236:        2703.89 |###########
+237:        2703.78 |###########
+238:        2704.10 |###########
+239:        2703.36 |##########
+240:        2704.30 |###########
+241:        2704.37 |############
+242:        2705.49 |#############
+243:        2705.18 |############
+244:        2706.65 |##############
+245:        2707.14 |###############
+246:        2708.09 |################
+247:        2708.70 |#################
+248:        2707.80 |################
+249:        2708.24 |################
+250:        2708.53 |################
+251:        2708.22 |################
+252:        2708.15 |################
+253:        2707.51 |###############
+254:        2707.27 |###############
+255:        2707.26 |###############
+256:        2708.06 |################
+257:        2708.99 |#################
+258:        2708.49 |################
+259:        2708.89 |#################
+260:        2709.47 |#################
+261:        2710.26 |##################
+262:        2709.99 |##################
+263:        2710.02 |##################
+264:        2710.89 |###################
+265:        2712.64 |#####################
+266:        2712.06 |####################
+267:        2711.16 |###################
+268:        2712.54 |#####################
+269:        2712.38 |#####################
+270:        2713.12 |######################
+271:        2713.22 |######################
+272:        2713.96 |#######################
+273:        2714.39 |#######################
+274:        2712.92 |#####################
+275:        2713.30 |######################
+276:        2713.02 |######################
+277:        2713.38 |######################
+278:        2713.02 |######################
+279:        2713.12 |######################
+280:        2713.07 |######################
+281:        2713.21 |######################
+282:        2713.21 |######################
+283:        2712.92 |#####################
+284:        2712.42 |#####################
+285:        2711.49 |####################
+286:        2712.93 |######################
+287:        2712.97 |######################
+288:        2713.05 |######################
+289:        2712.07 |#####################
+290:        2712.51 |#####################
+291:        2712.35 |#####################
+292:        2712.01 |####################
+293:        2712.87 |#####################
+294:        2712.70 |#####################
+295:        2713.00 |######################
+296:        2713.07 |######################
+297:        2713.23 |######################
+298:        2714.05 |#######################
+299:        2713.32 |######################
+300:        2712.68 |#####################
+301:        2711.66 |####################
+302:        2710.97 |###################
+303:        2710.73 |###################
+304:        2710.30 |##################
+305:        2710.41 |###################
+306:        2710.47 |###################
+307:        2710.72 |###################
+308:        2711.38 |####################
+309:        2711.24 |####################
+310:        2711.01 |###################
+311:        2711.00 |###################
+312:        2710.91 |###################
+313:        2711.17 |###################
+314:        2711.03 |###################
+315:        2709.63 |##################
+316:        2710.83 |###################
+317:        2709.82 |##################
+318:        2711.56 |####################
+319:        2712.32 |#####################
+320:        2711.03 |###################
+321:        2710.64 |###################
+322:        2709.83 |##################
+323:        2709.57 |##################
+324:        2710.90 |###################
+325:        2711.42 |####################
+326:        2712.11 |#####################
+327:        2710.06 |##################
+328:        2712.25 |#####################
+329:        2711.00 |###################
+330:        2710.14 |##################
+331:        2709.08 |#################
+332:        2714.30 |#######################
+333:        2715.59 |#########################
+334:        2716.93 |##########################
+335:        2719.16 |#############################
+336:        2719.61 |#############################
+337: S MAX  2719.79 |##############################
+338:        2719.79 |##############################
+339:        2719.79 |##############################
+340:        2719.79 |##############################
+341:        2719.79 |##############################
+342:        2719.79 |##############################
+343:        2719.79 |##############################
+344:        2719.79 |##############################
+#+END_SRC

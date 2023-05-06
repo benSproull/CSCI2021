@@ -1,0 +1,217 @@
+> make hashset_main                   # Compile hash table application
+gcc -Wall -Wno-comment -Werror -g  -c hashset_main.c
+gcc -Wall -Wno-comment -Werror -g  -c hashset_funcs.c
+gcc -Wall -Wno-comment -Werror -g  -o hashset_main hashset_main.o hashset_funcs.o
+
+> ./hashset_main                      # start application, shows help message with commands
+Hashset Application
+Commands:
+  hashcode <elem>  : prints out the numeric hash code for the given key (does not change the hash set)
+  contains <elem>  : prints the value associated with the given element or NOT PRESENT
+  add <elem>       : inserts the given element into the hash set, reports existing element
+  print            : prints all elements in the hash set in the order they were addded
+  structure        : prints detailed structure of the hash set
+  clear            : reinitializes hash set to be empty with default size
+  save <file>      : writes the contents of the hash set to the given file
+  load <file>      : clears the current hash set and loads the one in the given file
+  next_prime <int> : if <int> is prime, prints it, otherwise finds the next prime and prints it
+  expand           : expands memory size of hash set to reduce its load factor
+  quit             : exit the program
+
+HS>> print                                 # prints items in order, empty initially
+
+HS>> structure                             # show hash table structure, empty intitially
+elem_count: 0
+table_size: 5
+order_first: NULL
+order_last : NULL
+load_factor: 0.0000
+[ 0] : 
+[ 1] : 
+[ 2] : 
+[ 3] : 
+[ 4] : 
+
+HS>> add Rick                              # add items table
+HS>> add Morty                             
+
+HS>> print                                 # show items in order added
+  1 Rick
+  2 Morty
+
+HS>> structure                             # show internal structure of the hash table
+elem_count: 2
+table_size: 5
+order_first: Rick
+order_last : Morty
+load_factor: 0.4000
+[ 0] :                                     # some buckets are empty
+[ 1] : 
+[ 2] : 
+[ 3] : {2546943 Rick >>Morty}              # nodes show hash code, string stored, next string
+[ 4] : {74531189 Morty >>NULL}             # last item added, points to null
+
+HS>> add Summer                            # add more items
+HS>> add Jerry
+HS>> add Beth
+HS>> add Tinyrick
+
+HS>> print                                 # print items in order added
+  1 Rick
+  2 Morty
+  3 Summer
+  4 Jerry
+  5 Beth
+  6 Tinyrick
+
+HS>> structure                             # show structure
+elem_count: 6                              # NOTE: recently added items added to front of bucket lists
+table_size: 5
+order_first: Rick
+order_last : Tinyrick
+load_factor: 1.2000
+[ 0] : 
+[ 1] : {-1964728321 Tinyrick >>NULL} 
+[ 2] : {2066967 Beth >>Tinyrick} 
+[ 3] : {-1807340593 Summer >>Jerry} {2546943 Rick >>Morty} 
+[ 4] : {71462654 Jerry >>Beth} {74531189 Morty >>Summer} 
+
+HS>> contains Jerry                        # check if items contained / not in hashset
+FOUND: Jerry
+HS>> contains Rick
+FOUND: Rick
+HS>> contains Unity
+NOT PRESENT
+HS>> contains President
+NOT PRESENT
+
+HS>> add Jerry                             # items are unique, no changes made on detecting duplicates
+Elem already present, no changes made
+HS>> add Beth
+Elem already present, no changes made
+
+HS>> save rm.hashset                       # save the hash table file rm.hashset, can be loaded later
+HS>> clear                                 # clear the hash table
+HS>> print                                 # show cleared hash table is empty now
+HS>> structure
+elem_count: 0
+table_size: 5
+order_first: NULL
+order_last : NULL
+load_factor: 0.0000
+[ 0] : 
+[ 1] : 
+[ 2] : 
+[ 3] : 
+[ 4] : 
+
+HS>> add Birdperson                        # add new items to the empty hash table
+HS>> add Squanchy
+HS>> structure                             # show contents
+elem_count: 2
+table_size: 5
+order_first: Birdperson
+order_last : Squanchy
+load_factor: 0.4000
+[ 0] : 
+[ 1] : 
+[ 2] : {-724361712 Squanchy >>NULL} 
+[ 3] : {2082041198 Birdperson >>Squanchy} 
+[ 4] : 
+
+HS>> load rm.hashset                       # clear current hash table and load from file
+HS>> structure                             # show contents identical to when 'save' was used
+elem_count: 6
+table_size: 5
+order_first: Rick
+order_last : Tinyrick
+load_factor: 1.2000
+[ 0] : 
+[ 1] : {-1964728321 Tinyrick >>NULL} 
+[ 2] : {2066967 Beth >>Tinyrick} 
+[ 3] : {-1807340593 Summer >>Jerry} {2546943 Rick >>Morty} 
+[ 4] : {71462654 Jerry >>Beth} {74531189 Morty >>Summer} 
+
+HS>> expand                                # expand the size of the hash table's internal array
+HS>> print                                 # no effect on items/ordering in table
+  1 Rick
+  2 Morty
+  3 Summer
+  4 Jerry
+  5 Beth
+  6 Tinyrick
+
+HS>> structure                             # show internal sturcture: larger array now
+elem_count: 6
+
+table_size: 11                             # array size is next_prime(2*5+1) = 11
+order_first: Rick
+order_last : Tinyrick
+load_factor: 0.5455
+[ 0] : 
+[ 1] : {2066967 Beth >>Tinyrick} 
+[ 2] : 
+[ 3] : {-1807340593 Summer >>Jerry} {2546943 Rick >>Morty} 
+[ 4] : 
+[ 5] : 
+[ 6] : {-1964728321 Tinyrick >>NULL} 
+[ 7] : {74531189 Morty >>Summer} 
+[ 8] : 
+[ 9] : 
+[10] : {71462654 Jerry >>Beth} 
+
+HS>> add Birdperson                        # add additional items
+HS>> add Squanchy
+HS>> add Picklerick
+
+HS>> structure                             # show structure again
+elem_count: 9
+table_size: 11
+order_first: Rick
+order_last : Picklerick
+load_factor: 0.8182
+[ 0] : {761532761 Picklerick >>NULL} 
+[ 1] : {2066967 Beth >>Tinyrick} 
+[ 2] : 
+[ 3] : {-1807340593 Summer >>Jerry} {2546943 Rick >>Morty} 
+[ 4] : 
+[ 5] : 
+[ 6] : {2082041198 Birdperson >>Squanchy} {-1964728321 Tinyrick >>Birdperson} 
+[ 7] : {74531189 Morty >>Summer} 
+[ 8] : {-724361712 Squanchy >>Picklerick} 
+[ 9] : 
+[10] : {71462654 Jerry >>Beth} 
+
+HS>> expand                                # expand again
+HS>> structure                             # show internal structure
+elem_count: 9
+table_size: 23                             # size is next_prime(2*11 + 1) = 23
+order_first: Rick
+order_last : Picklerick
+load_factor: 0.3913
+[ 0] : 
+[ 1] : {761532761 Picklerick >>NULL} 
+[ 2] : 
+[ 3] : {2066967 Beth >>Tinyrick} 
+[ 4] : 
+[ 5] : 
+[ 6] : 
+[ 7] : 
+[ 8] : {2082041198 Birdperson >>Squanchy} 
+[ 9] : 
+[10] : 
+[11] : {-724361712 Squanchy >>Picklerick} {-1964728321 Tinyrick >>Birdperson} {74531189 Morty >>Summer} 
+[12] : 
+[13] : 
+[14] : 
+[15] : {2546943 Rick >>Morty} 
+[16] : 
+[17] : 
+[18] : {-1807340593 Summer >>Jerry} 
+[19] : 
+[20] : 
+[21] : {71462654 Jerry >>Beth} 
+[22] : 
+
+HS>> quit                                  # exit the application
+>>                                         # back to normal shell

@@ -1,0 +1,431 @@
+#+TITLE: Problem 1 First 3 Functions in stock_funcs.c
+#+TESTY: PREFIX="prob1"
+#+TESTY: USE_VALGRIND=1
+
+* stock_new
+#+TESTY: program='./test_stock_funcs stock_new'
+#+BEGIN_SRC sh
+{
+    // Tests stock_new() function and whether it initializes fields
+    // correctly before returning a stock.
+
+    stock_t *stock = stock_new(); // call function to allocate/init
+
+    printf("stock->data_file: %p\n" , stock->data_file);
+    printf("stock->count:     %d\n" , stock->count);
+    printf("stock->prices:    %p\n" , stock->prices);
+    printf("stock->min_index: %d\n" , stock->min_index);
+    printf("stock->max_index: %d\n" , stock->max_index);
+    printf("stock->best_buy:  %d\n" , stock->best_buy);
+    printf("stock->best_sell: %d\n" , stock->best_sell);
+
+    free(stock);                // de-allocate manually
+}
+stock->data_file: (nil)
+stock->count:     -1
+stock->prices:    (nil)
+stock->min_index: -1
+stock->max_index: -1
+stock->best_buy:  -1
+stock->best_sell: -1
+#+END_SRC
+
+* stock_free1
+#+TESTY: program='./test_stock_funcs stock_free1'
+#+BEGIN_SRC sh
+{
+    // Tests stock_free() function and whether it frees a stock
+    // allocated by stock_new() correctly
+
+    printf("Allocating with stock_new()\n");
+    stock_t *stock = stock_new(); // call function to allocate/init
+
+    if(stock == NULL){
+      printf("ERROR: got a NULL pointer from stock_new()\n");
+    }
+    else{
+      printf("De-allocating with stock_free()\n");
+      stock_free(stock);
+      printf("Complete\n");
+    }
+}
+Allocating with stock_new()
+De-allocating with stock_free()
+Complete
+#+END_SRC
+
+* stock_free2
+#+TESTY: program='./test_stock_funcs stock_free2'
+#+BEGIN_SRC sh
+{
+    // Tests whether stock_free() correctly free()'s the 'data_file'
+    // field if it is set after using stock_new(). Valgrind will
+    // report leaked memory if free() is not called on
+    // 'stock->data_file'.
+
+    printf("Allocating with stock_new()\n");
+    stock_t *stock = stock_new(); // call function to allocate/init
+
+    printf("Assigning data_file field fresh memory\n");
+    stock->data_file = malloc(sizeof(char) * 20);
+    strcpy(stock->data_file, "some-file-name.txt");
+
+    printf("De-allocating with stock_free()\n");
+    stock_free(stock);
+
+    printf("Complete\n");
+}
+Allocating with stock_new()
+Assigning data_file field fresh memory
+De-allocating with stock_free()
+Complete
+#+END_SRC
+
+* stock_free3
+#+TESTY: program='./test_stock_funcs stock_free3'
+#+BEGIN_SRC sh
+{
+    // Tests whether stock_free() correctly free()'s the 'prices' field
+    // if it is set after using stock_new(). Valgrind will report
+    // leaked memory if free() is not called on 'stock->prices'.
+
+    printf("Allocating with stock_new()\n");
+    stock_t *stock = stock_new(); // call function to allocate/init
+
+    printf("Assigning prices field fresh memory\n");
+    stock->prices = malloc(sizeof(double) * 5);
+    double prices[5] = {10.0, 5.0, 15.0, 20.0, 5.0};
+    memcpy(stock->prices, prices, sizeof(double)*5);  // copies to prices
+
+    printf("De-allocating with stock_free()\n");
+    stock_free(stock);
+
+    printf("Complete\n");
+}
+Allocating with stock_new()
+Assigning prices field fresh memory
+De-allocating with stock_free()
+Complete
+#+END_SRC
+
+* stock_free4
+#+TESTY: program='./test_stock_funcs stock_free4'
+#+BEGIN_SRC sh
+{
+    // Tests whether stock_free() correctly free()'s the 'data_file'
+    // and 'prices' fields if they are non-NULL.
+
+    printf("Allocating with stock_new()\n");
+    stock_t *stock = stock_new(); // call function to allocate/init
+
+    printf("Assigning prices field fresh memory\n");
+    stock->prices = malloc(sizeof(double) * 5);
+
+    printf("Assigning data_file field fresh memory\n");
+    stock->data_file = strdup("another-file-name-of-some-sort.txt");
+
+    printf("De-allocating with stock_free()\n");
+    stock_free(stock);
+
+    printf("Complete\n");
+}
+Allocating with stock_new()
+Assigning prices field fresh memory
+Assigning data_file field fresh memory
+De-allocating with stock_free()
+Complete
+#+END_SRC
+
+ 
+* stock_print1
+#+TESTY: program='./test_stock_funcs stock_print1'
+#+BEGIN_SRC sh
+{
+    // Tests whether stock_print() correctly prints a freshly
+    // allocated stock after stock_new().
+
+    stock_t *stock = stock_new();
+    stock_print(stock);
+    stock_free(stock);
+}
+data_file: NULL
+count: -1
+prices: NULL
+min_index: -1
+max_index: -1
+best_buy:  -1
+best_sell: -1
+profit:    0.00
+#+END_SRC
+
+ 
+* stock_print2
+#+TESTY: program='./test_stock_funcs stock_print2'
+#+BEGIN_SRC sh
+{
+    // Allocates a stack-based stock and checks for correct
+    // printing. No free-ing is requred in this case.
+
+    stock_t stock = {
+      .data_file = NULL,
+      .count = -1,
+      .prices = NULL,
+      .min_index = -1,
+      .max_index = -1,
+      .best_buy  = -1,
+      .best_sell = -1,
+    };
+    stock_print(&stock);
+}
+data_file: NULL
+count: -1
+prices: NULL
+min_index: -1
+max_index: -1
+best_buy:  -1
+best_sell: -1
+profit:    0.00
+#+END_SRC
+
+ 
+* stock_print3
+#+TESTY: program='./test_stock_funcs stock_print3'
+#+BEGIN_SRC sh
+{
+    // Allocates a stack-based stock then fills in some values for it
+    // and checks for correct printing. The prices array has 5
+    // elements so checks for correct printing of the first 3 elements
+    // plus the ... elipses.
+
+    double prices[5] = {10.0, 5.0, 15.0, 20.0, 5.0};
+
+    stock_t stock = {
+      .data_file = "a-data-file.txt",
+      .count = 5,
+      .prices = prices,
+      .min_index = -1,
+      .max_index = -1,
+      .best_buy  = -1,
+      .best_sell = -1,
+    };
+    stock_print(&stock);
+}
+data_file: a-data-file.txt
+count: 5
+prices: [10.00, 5.00, 15.00, ...]
+min_index: -1
+max_index: -1
+best_buy:  -1
+best_sell: -1
+profit:    0.00
+#+END_SRC
+
+ 
+* stock_print4
+#+TESTY: program='./test_stock_funcs stock_print4'
+#+BEGIN_SRC sh
+{
+    // Same as previous test but also sets min/max index and checks
+    // for correct printing.
+
+    double prices[5] = {10.0, 5.0, 15.0, 20.0, 5.0};
+
+    stock_t stock = {
+      .data_file = "another-data-file.txt",
+      .count = 5,
+      .prices = prices,
+      .min_index = 1,
+      .max_index = 3,
+      .best_buy  = -1,
+      .best_sell = -1,
+    };
+    stock_print(&stock);
+}
+data_file: another-data-file.txt
+count: 5
+prices: [10.00, 5.00, 15.00, ...]
+min_index: 1
+max_index: 3
+best_buy:  -1
+best_sell: -1
+profit:    0.00
+#+END_SRC
+
+* stock_print5
+#+TESTY: program='./test_stock_funcs stock_print5'
+#+BEGIN_SRC sh
+{
+    // Same as previous test but also sets best buy/sell index and
+    // checks for correct printing. This should give a non-zero profit
+    // as well.
+
+    double prices[5] = {10.0, 5.0, 15.0, 20.0, 5.0};
+
+    stock_t stock = {
+      .data_file = "more-stock-data.txt",
+      .count = 5,
+      .prices = prices,
+      .min_index = 1,
+      .max_index = 3,
+      .best_buy  = 1,
+      .best_sell = 3,
+    };
+    stock_print(&stock);
+}
+data_file: more-stock-data.txt
+count: 5
+prices: [10.00, 5.00, 15.00, ...]
+min_index: 1
+max_index: 3
+best_buy:  1
+best_sell: 3
+profit:    15.00
+#+END_SRC
+
+* stock_print_prices_0
+#+TESTY: program='./test_stock_funcs stock_print_prices_0'
+#+BEGIN_SRC sh
+{
+    // Checks that printing is correct for a 0-count 0-length price
+    // array. This should be printed specially as [].
+    double prices[0] = {};
+
+    stock_t stock = {
+      .data_file = "some-file.txt",
+      .count = 0,
+      .prices = prices,
+      .min_index = -1,
+      .max_index = -1,
+      .best_buy  = -1,
+      .best_sell = -1,
+    };
+    stock_print(&stock);
+}
+data_file: some-file.txt
+count: 0
+prices: []
+min_index: -1
+max_index: -1
+best_buy:  -1
+best_sell: -1
+profit:    0.00
+#+END_SRC
+
+* stock_print_prices_1
+#+TESTY: program='./test_stock_funcs stock_print_prices_1'
+#+BEGIN_SRC sh
+{
+    // Checks printing 1-length prices array is correct.
+    double prices[1] = {45.25};
+
+    stock_t stock = {
+      .data_file = "some-file.txt",
+      .count = 1,
+      .prices = prices,
+      .min_index = -1,
+      .max_index = -1,
+      .best_buy  = -1,
+      .best_sell = -1,
+    };
+    stock_print(&stock);
+}
+data_file: some-file.txt
+count: 1
+prices: [45.25]
+min_index: -1
+max_index: -1
+best_buy:  -1
+best_sell: -1
+profit:    0.00
+#+END_SRC
+
+* stock_print_prices_2
+#+TESTY: program='./test_stock_funcs stock_print_prices_2'
+#+BEGIN_SRC sh
+{
+    // Checks printing 2-length prices array is correct.
+    double prices[2] = {45.25, 32.37};
+
+    stock_t stock = {
+      .data_file = "some-file.txt",
+      .count = 2,
+      .prices = prices,
+      .min_index = -1,
+      .max_index = -1,
+      .best_buy  = -1,
+      .best_sell = -1,
+    };
+    stock_print(&stock);
+}
+data_file: some-file.txt
+count: 2
+prices: [45.25, 32.37]
+min_index: -1
+max_index: -1
+best_buy:  -1
+best_sell: -1
+profit:    0.00
+#+END_SRC
+
+* stock_print_prices_3
+#+TESTY: program='./test_stock_funcs stock_print_prices_3'
+#+BEGIN_SRC sh
+{
+    // Checks printing 3-length prices array is correct.
+    double prices[3] = {45.25, 32.37, 40.99};
+
+    stock_t stock = {
+      .data_file = "some-file.txt",
+      .count = 3,
+      .prices = prices,
+      .min_index = -1,
+      .max_index = -1,
+      .best_buy  = -1,
+      .best_sell = -1,
+    };
+    stock_print(&stock);
+}
+data_file: some-file.txt
+count: 3
+prices: [45.25, 32.37, 40.99]
+min_index: -1
+max_index: -1
+best_buy:  -1
+best_sell: -1
+profit:    0.00
+#+END_SRC
+
+* stock_print_final
+#+TESTY: program='./test_stock_funcs stock_print_final'
+#+BEGIN_SRC sh
+{
+    // Checks printing is correct for a more complex stock that is
+    // allocated/free'd using standard functions.
+    double prices[10] = {
+      125.72, 190.04, 45.25, 32.37, 40.99, 
+      168.00, 16.03, 14.11, 50.00, 96.89,
+    };
+    stock_t *stock = stock_new();
+
+    stock->data_file = strdup("bouncy-prices.txt");
+    stock->count = 10;
+    stock->prices = malloc(sizeof(double)*10);
+    memcpy(stock->prices, prices, sizeof(double)*10);
+    stock->min_index = 7;
+    stock->max_index = 2;
+    stock->best_buy  = 3;
+    stock->best_sell = 5;
+
+    stock_print(stock);
+
+    stock_free(stock);
+}
+data_file: bouncy-prices.txt
+count: 10
+prices: [125.72, 190.04, 45.25, ...]
+min_index: 7
+max_index: 2
+best_buy:  3
+best_sell: 5
+profit:    135.63
+#+END_SRC
